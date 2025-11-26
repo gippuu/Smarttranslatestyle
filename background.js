@@ -72,8 +72,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       if (message.type === 'TRANSLATE_TEXT') {
         const target = message.target || 'it';
-        // Check cache first
-        const cacheKey = `t:${target}|${text}`;
+        const context = message.context || '';
+        // Check cache first (cache key now includes context hash if present)
+        const cacheKey = context ? `t:${target}|${text}|${context.substring(0, 50)}` : `t:${target}|${text}`;
         try {
           const cached = await getCachedTranslation(cacheKey);
           if (cached) {
@@ -85,10 +86,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           console.warn('Cache read failed', err);
         }
 
+        const payload = { text, target };
+        if (context) {
+          payload.context = context;
+          payload.detailedAnalysis = true; // Request detailed analysis when context is provided
+        }
+
         const resp = await fetch(PROXY_URL, {
           method: 'POST',
           headers,
-          body: JSON.stringify({ text, target }),
+          body: JSON.stringify(payload),
           signal: controller.signal
         });
 
@@ -103,8 +110,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const data = await resp.json().catch(() => null);
         if (!data) { sendResponse({ error: 'invalid_response' }); return; }
         if (data.translation) {
-          setCachedTranslation(cacheKey, data.translation).catch(() => {});
-          sendResponse({ translation: data.translation });
+          // Only cache simple translations, not detailed analysis
+          if (!context) {
+            setCachedTranslation(cacheKey, data.translation).catch(() => {});
+          }
+          // Send back translation along with detailed analysis if available
+          const response = { translation: data.translation };
+          if (data.detailedAnalysis) {
+            response.detailedAnalysis = data.detailedAnalysis;
+          }
+          sendResponse(response);
         } else if (data.error) {
           sendResponse({ error: 'proxy_error', detail: data });
         } else {
