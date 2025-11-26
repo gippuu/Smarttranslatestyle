@@ -72,6 +72,50 @@ function positionElementAtRect(el, rect, offsetX = 0, offsetY = -30) {
   el.style.top = `${top}px`;
 }
 
+// Extract surrounding context from the selection
+function getSelectionContext(range, selectedText) {
+  try {
+    // Get the container node
+    const container = range.commonAncestorContainer;
+    const textNode = container.nodeType === Node.TEXT_NODE ? container : container.parentNode;
+
+    // Try to get the full paragraph or sentence context
+    let contextText = '';
+
+    // First, try to get the parent paragraph
+    let parentElement = textNode;
+    while (parentElement && parentElement !== document.body) {
+      if (parentElement.tagName && ['P', 'DIV', 'ARTICLE', 'SECTION', 'LI', 'TD', 'TH'].includes(parentElement.tagName)) {
+        contextText = parentElement.textContent || '';
+        break;
+      }
+      parentElement = parentElement.parentNode;
+    }
+
+    // If no paragraph found or text is too short, get surrounding text nodes
+    if (!contextText || contextText.length < 50) {
+      contextText = textNode.textContent || '';
+    }
+
+    // Clean and limit context length (200 chars before + 200 after the selection)
+    contextText = contextText.trim().replace(/\s+/g, ' ');
+    const selectedIndex = contextText.indexOf(selectedText);
+
+    if (selectedIndex !== -1 && contextText.length > 500) {
+      const start = Math.max(0, selectedIndex - 200);
+      const end = Math.min(contextText.length, selectedIndex + selectedText.length + 200);
+      contextText = (start > 0 ? '...' : '') + contextText.substring(start, end) + (end < contextText.length ? '...' : '');
+    } else if (contextText.length > 500) {
+      contextText = contextText.substring(0, 500) + '...';
+    }
+
+    return contextText;
+  } catch (err) {
+    console.warn('Failed to extract context:', err);
+    return '';
+  }
+}
+
 async function showBubbleForSelection() {
   try {
     const sel = window.getSelection();
@@ -93,14 +137,15 @@ async function showBubbleForSelection() {
       btn.addEventListener('click', async (ev) => {
         ev.stopPropagation();
         ev.preventDefault();
-        // fetch translation
-        const resp = await sendMessageAsync({ type: 'TRANSLATE_TEXT', text });
+        // fetch translation with context
+        const context = getSelectionContext(range, text);
+        const resp = await sendMessageAsync({ type: 'TRANSLATE_TEXT', text, context });
         if (!resp || resp.error) {
           console.error('Errore traduzione:', resp);
           return;
         }
         removeBubble();
-        showPopup(text, resp.translation);
+        showPopup(text, resp.translation, resp.detailedAnalysis, context);
       });
       document.body.appendChild(btn);
       _bubble = btn;
@@ -127,8 +172,173 @@ document.addEventListener('click', (e) => {
 });
 
 
+// Render detailed analysis with structured sections
+function renderDetailedAnalysis(container, analysis, originalText) {
+  container.innerHTML = '';
+
+  // 📖 FULL EXPLANATION
+  if (analysis.explanation) {
+    const explSection = document.createElement('div');
+    explSection.className = 'st-section';
+
+    const explTitle = document.createElement('div');
+    explTitle.className = 'st-section-title';
+    explTitle.textContent = '📖 FULL EXPLANATION';
+    explSection.appendChild(explTitle);
+
+    const explText = document.createElement('div');
+    explText.className = 'st-section-content';
+    explText.textContent = analysis.explanation;
+    explSection.appendChild(explText);
+
+    container.appendChild(explSection);
+
+    // Add separator
+    const sep1 = document.createElement('div');
+    sep1.className = 'st-separator';
+    container.appendChild(sep1);
+  }
+
+  // 🔄 SYNONYMS & ALTERNATIVES
+  if (analysis.synonyms && analysis.synonyms.length > 0) {
+    const synSection = document.createElement('div');
+    synSection.className = 'st-section';
+
+    const synTitle = document.createElement('div');
+    synTitle.className = 'st-section-title';
+    synTitle.textContent = '🔄 SYNONYMS & ALTERNATIVES';
+    synSection.appendChild(synTitle);
+
+    const synList = document.createElement('ul');
+    synList.className = 'st-bullet-list';
+    analysis.synonyms.forEach(syn => {
+      const li = document.createElement('li');
+      li.textContent = syn;
+      synList.appendChild(li);
+    });
+    synSection.appendChild(synList);
+
+    container.appendChild(synSection);
+
+    const sep2 = document.createElement('div');
+    sep2.className = 'st-separator';
+    container.appendChild(sep2);
+  }
+
+  // 💬 EXAMPLE SENTENCES
+  if (analysis.examples && analysis.examples.length > 0) {
+    const exSection = document.createElement('div');
+    exSection.className = 'st-section';
+
+    const exTitle = document.createElement('div');
+    exTitle.className = 'st-section-title';
+    exTitle.textContent = '💬 EXAMPLE SENTENCES';
+    exSection.appendChild(exTitle);
+
+    const exList = document.createElement('div');
+    exList.className = 'st-examples-list';
+    analysis.examples.forEach(ex => {
+      const exItem = document.createElement('div');
+      exItem.className = 'st-example-item';
+      exItem.textContent = ex;
+      exList.appendChild(exItem);
+    });
+    exSection.appendChild(exList);
+
+    container.appendChild(exSection);
+
+    const sep3 = document.createElement('div');
+    sep3.className = 'st-separator';
+    container.appendChild(sep3);
+  }
+
+  // ⚠️ DON'T CONFUSE WITH
+  if (analysis.confusables && analysis.confusables.length > 0) {
+    const confSection = document.createElement('div');
+    confSection.className = 'st-section';
+
+    const confTitle = document.createElement('div');
+    confTitle.className = 'st-section-title';
+    confTitle.textContent = '⚠️ DON\'T CONFUSE WITH';
+    confSection.appendChild(confTitle);
+
+    const confList = document.createElement('ul');
+    confList.className = 'st-bullet-list';
+    analysis.confusables.forEach(conf => {
+      const li = document.createElement('li');
+      li.textContent = conf;
+      confList.appendChild(li);
+    });
+    confSection.appendChild(confList);
+
+    container.appendChild(confSection);
+
+    const sep4 = document.createElement('div');
+    sep4.className = 'st-separator';
+    container.appendChild(sep4);
+  }
+
+  // 🎯 USAGE NOTES
+  if (analysis.usageNotes) {
+    const usageSection = document.createElement('div');
+    usageSection.className = 'st-section';
+
+    const usageTitle = document.createElement('div');
+    usageTitle.className = 'st-section-title';
+    usageTitle.textContent = '🎯 USAGE NOTES';
+    usageSection.appendChild(usageTitle);
+
+    const usageList = document.createElement('ul');
+    usageList.className = 'st-bullet-list';
+
+    if (analysis.usageNotes.formality) {
+      const li = document.createElement('li');
+      li.textContent = `Formality: ${analysis.usageNotes.formality}`;
+      usageList.appendChild(li);
+    }
+    if (analysis.usageNotes.register) {
+      const li = document.createElement('li');
+      li.textContent = `Register: ${analysis.usageNotes.register}`;
+      usageList.appendChild(li);
+    }
+    if (analysis.usageNotes.frequency) {
+      const li = document.createElement('li');
+      li.textContent = `Frequency: ${analysis.usageNotes.frequency}`;
+      usageList.appendChild(li);
+    }
+
+    usageSection.appendChild(usageList);
+    container.appendChild(usageSection);
+  }
+
+  // Action buttons at bottom
+  const actionsDiv = document.createElement('div');
+  actionsDiv.className = 'st-actions';
+
+  const listenBtn = document.createElement('button');
+  listenBtn.className = 'st-action-btn';
+  listenBtn.innerHTML = '🔊 Listen Again';
+  listenBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    playPronunciation(originalText);
+  });
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'st-action-btn st-close-btn';
+  closeBtn.innerHTML = '✕ Close';
+  closeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const popup = document.querySelector('[data-smarttranslate="popup"]');
+    if (popup) popup.remove();
+  });
+
+  actionsDiv.appendChild(listenBtn);
+  actionsDiv.appendChild(closeBtn);
+  container.appendChild(actionsDiv);
+}
+
 // --- Funzione per creare il mini tooltip vicino al testo ---
-function showPopup(original, translated) {
+function showPopup(original, translated, detailedAnalysis = null, context = '') {
   // Rimuovi popup precedente (solo i nostri popup, usando un data-attribute)
   document.querySelectorAll('[data-smarttranslate="popup"]').forEach(e => e.remove());
 
@@ -153,9 +363,6 @@ function showPopup(original, translated) {
   }
   boldOriginal.textContent = displayText;
 
-  const translatedDiv = document.createElement('div');
-  translatedDiv.textContent = translated;
-
   // build header with original text + audio button
   const header = document.createElement('div');
   header.className = 'smarttranslate-header';
@@ -175,22 +382,45 @@ function showPopup(original, translated) {
   header.appendChild(boldOriginal);
   header.appendChild(audioBtn);
 
-  // Translation section
+  // Translation section - now includes clarification if available
   const translationSection = document.createElement('div');
   translationSection.className = 'smarttranslate-translation';
+
+  const translatedDiv = document.createElement('div');
+  translatedDiv.className = 'st-translation-text';
+  translatedDiv.textContent = translated;
   translationSection.appendChild(translatedDiv);
+
+  // Add clarification if available from detailed analysis
+  if (detailedAnalysis && detailedAnalysis.clarification) {
+    const clarificationDiv = document.createElement('div');
+    clarificationDiv.className = 'st-clarification';
+    clarificationDiv.textContent = detailedAnalysis.clarification;
+    translationSection.appendChild(clarificationDiv);
+  }
 
   // plus button to show synonyms/examples or sentence breakdown
   const plusBtn = document.createElement('button');
   plusBtn.className = 'smarttranslate-plus-btn';
   plusBtn.type = 'button';
   plusBtn.title = 'Show more details';
-  plusBtn.innerHTML = '<span class="plus-icon">+</span><span class="plus-text">Show details</span>';
 
-  // details container (hidden by default)
+  // details container
   const details = document.createElement('div');
   details.className = 'smarttranslate-details';
-  details.style.display = 'none';
+
+  // If we have detailed analysis, show it immediately
+  let analysisLoaded = false;
+  if (detailedAnalysis) {
+    renderDetailedAnalysis(details, detailedAnalysis, original);
+    details.style.display = 'block';
+    popup.classList.add('expanded');
+    plusBtn.innerHTML = '<span class="plus-icon">−</span><span class="plus-text">Hide details</span>';
+    analysisLoaded = true;
+  } else {
+    details.style.display = 'none';
+    plusBtn.innerHTML = '<span class="plus-icon">+</span><span class="plus-text">Show details</span>';
+  }
 
   popup.appendChild(header);
   popup.appendChild(translationSection);
@@ -265,8 +495,7 @@ function showPopup(original, translated) {
   popup.style.top = `${window.scrollY + rect.bottom + 8}px`;
   popup.style.left = `${window.scrollX + rect.left}px`;
 
-  // Handler for plusBtn: fetch analysis or toggle
-  let analysisLoaded = false;
+  // Handler for plusBtn: fetch analysis or toggle (analysisLoaded already declared above)
   plusBtn.addEventListener('click', async (ev) => {
     ev.stopPropagation();
     ev.preventDefault();
@@ -302,41 +531,47 @@ function showPopup(original, translated) {
       return;
     }
     const a = resp.analysis;
-    // render based on type
-    details.innerHTML = '';
-    if (a.type === 'word' || a.word) {
-      // synonyms, antonyms, examples
-      const syn = (a.synonyms || []).slice(0, 12);
-      const ant = (a.antonyms || a.contrary || []).slice(0, 12);
-      const ex = (a.examples || []).slice(0, 6);
-      if (syn.length) {
-        const h = document.createElement('div'); h.className = 'st-detail-title'; h.textContent = 'Synonyms'; details.appendChild(h);
-        const ul = document.createElement('div'); ul.className = 'st-list'; ul.textContent = syn.join(', '); details.appendChild(ul);
-      }
-      if (ant.length) {
-        const h = document.createElement('div'); h.className = 'st-detail-title'; h.textContent = 'Antonyms'; details.appendChild(h);
-        const ul = document.createElement('div'); ul.className = 'st-list'; ul.textContent = ant.join(', '); details.appendChild(ul);
-      }
-      if (ex.length) {
-        const h = document.createElement('div'); h.className = 'st-detail-title'; h.textContent = 'Examples'; details.appendChild(h);
-        ex.forEach(s => { const p = document.createElement('div'); p.className = 'st-example'; p.textContent = s; details.appendChild(p); });
-      }
-    } else if (a.type === 'sentence' || a.words) {
-      const h = document.createElement('div'); h.className = 'st-detail-title'; h.textContent = 'Sentence breakdown'; details.appendChild(h);
-      const container = document.createElement('div'); container.className = 'st-words';
-      (a.words || []).forEach((w, idx) => {
-        const item = document.createElement('div'); item.className = 'st-word-item';
-        const left = document.createElement('div'); left.className = 'st-word-left'; left.textContent = `${w.word}`;
-        const right = document.createElement('div'); right.className = 'st-word-right'; right.innerHTML = `<strong>${w.role || ''}</strong>: ${w.explanation || ''}`;
-        item.appendChild(left); item.appendChild(right); container.appendChild(item);
-      });
-      details.appendChild(container);
-      if (a.examples && a.examples.length) {
-        const he = document.createElement('div'); he.className = 'st-detail-title'; he.textContent = 'Examples'; details.appendChild(he);
-        a.examples.slice(0,6).forEach(s => { const p = document.createElement('div'); p.className = 'st-example'; p.textContent = s; details.appendChild(p); });
-      }
+    // Try to use the new detailed format if available, otherwise fall back to legacy
+    if (a.explanation || a.synonyms || a.examples || a.confusables || a.usageNotes) {
+      // New detailed format
+      renderDetailedAnalysis(details, a, original);
     } else {
-      details.textContent = 'Nessuna informazione disponibile.';
+      // Legacy format for backward compatibility
+      details.innerHTML = '';
+      if (a.type === 'word' || a.word) {
+        // synonyms, antonyms, examples
+        const syn = (a.synonyms || []).slice(0, 12);
+        const ant = (a.antonyms || a.contrary || []).slice(0, 12);
+        const ex = (a.examples || []).slice(0, 6);
+        if (syn.length) {
+          const h = document.createElement('div'); h.className = 'st-detail-title'; h.textContent = 'Synonyms'; details.appendChild(h);
+          const ul = document.createElement('div'); ul.className = 'st-list'; ul.textContent = syn.join(', '); details.appendChild(ul);
+        }
+        if (ant.length) {
+          const h = document.createElement('div'); h.className = 'st-detail-title'; h.textContent = 'Antonyms'; details.appendChild(h);
+          const ul = document.createElement('div'); ul.className = 'st-list'; ul.textContent = ant.join(', '); details.appendChild(ul);
+        }
+        if (ex.length) {
+          const h = document.createElement('div'); h.className = 'st-detail-title'; h.textContent = 'Examples'; details.appendChild(h);
+          ex.forEach(s => { const p = document.createElement('div'); p.className = 'st-example'; p.textContent = s; details.appendChild(p); });
+        }
+      } else if (a.type === 'sentence' || a.words) {
+        const h = document.createElement('div'); h.className = 'st-detail-title'; h.textContent = 'Sentence breakdown'; details.appendChild(h);
+        const container = document.createElement('div'); container.className = 'st-words';
+        (a.words || []).forEach((w, idx) => {
+          const item = document.createElement('div'); item.className = 'st-word-item';
+          const left = document.createElement('div'); left.className = 'st-word-left'; left.textContent = `${w.word}`;
+          const right = document.createElement('div'); right.className = 'st-word-right'; right.innerHTML = `<strong>${w.role || ''}</strong>: ${w.explanation || ''}`;
+          item.appendChild(left); item.appendChild(right); container.appendChild(item);
+        });
+        details.appendChild(container);
+        if (a.examples && a.examples.length) {
+          const he = document.createElement('div'); he.className = 'st-detail-title'; he.textContent = 'Examples'; details.appendChild(he);
+          a.examples.slice(0,6).forEach(s => { const p = document.createElement('div'); p.className = 'st-example'; p.textContent = s; details.appendChild(p); });
+        }
+      } else {
+        details.textContent = 'Nessuna informazione disponibile.';
+      }
     }
     details.style.display = 'block';
     popup.classList.add('expanded');
