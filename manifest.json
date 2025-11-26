@@ -1,0 +1,32 @@
+{ "manifest_version": 3, 
+"version": "1.0.0", 
+"name": "Traduci il testo selezionato con SmartTranslate+",
+"description": "description",
+"permissions": ["storage",
+    "activeTab",
+    "scripting",
+    "contextMenus"],
+  
+  "host_permissions": [
+    "<all_urls>"
+  ],
+ "background": {
+    "service_worker": "background.js"
+  },
+ "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["popup.css"]
+    }
+  ],
+  "commands": {
+    "translate-selection": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+T"
+      },
+      "description": "Traduci il testo selezionato con SmartTranslate+"
+    }
+  },"author": "SmartTranslate Team",
+  "homepage_url": "https://smarttranslate.plus"
+}

@@ -1,0 +1,93 @@
+.smarttranslate-popup {
+	position: absolute;
+	background: #fff;
+	border: 1px solid #ccc;
+ 	border-radius: 6px;
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+	padding: 12px;
+	font-size: 14px;
+	color: #333;
+	z-index: 2147483647;
+	cursor: grab;
+	touch-action: none; /* avoid page panning while dragging */
+	user-select: none; /* avoid text selection while dragging */
+	max-width: 360px;
+	min-width: 220px;
+	min-height: 120px;
+	line-height: 1.2;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+		"Helvetica Neue", Arial, sans-serif;
+}
+
+.smarttranslate-popup.dragging {
+	cursor: grabbing;
+}
+
+.smarttranslate-popup b {
+	font-weight: 600;
+}
+
+.smarttranslate-audio-btn {
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	font-size: 16px;
+	padding: 2px 6px;
+	line-height: 1;
+	color: #444;
+}
+.smarttranslate-audio-btn:active {
+	transform: translateY(1px);
+}
+
+/* Floating circular bubble shown next to a text selection */
+.smarttranslate-bubble {
+	position: absolute;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: #0b84ff;
+	color: #fff;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 4px 12px rgba(11,132,255,0.2);
+	border: none;
+	cursor: pointer;
+	z-index: 2147483648;
+	font-size: 11px;
+}
+.smarttranslate-bubble:active { transform: translateY(1px); }
+
+.smarttranslate-plus-btn {
+	background: #f3f4f6;
+	border: 1px solid #e2e8f0;
+	border-radius: 4px;
+	padding: 2px 6px;
+	cursor: pointer;
+	font-weight: 600;
+	color: #333;
+}
+.smarttranslate-details {
+	margin-top: 8px;
+	font-size: 13px;
+	color: #333;
+}
+.st-detail-title {
+	font-weight: 700;
+	margin-top: 6px;
+	margin-bottom: 4px;
+}
+.st-list {
+	color: #222;
+	margin-bottom: 6px;
+}
+.st-example {
+	font-style: italic;
+	color: #444;
+	margin-bottom: 4px;
+}
+.st-words { display: flex; flex-direction: column; gap: 6px; }
+.st-word-item { display:flex; gap:8px; }
+.st-word-left { min-width: 90px; font-weight:600; }
+.st-word-right { flex:1; color:#333; }
