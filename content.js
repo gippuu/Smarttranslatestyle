@@ -143,29 +143,15 @@ function showPopup(original, translated) {
   const translatedDiv = document.createElement('div');
   translatedDiv.textContent = translated;
 
-  // build header with original text + audio button + voice selector
+  // build header with original text + audio button
   const header = document.createElement('div');
-  header.style.display = 'inline-flex';
-  header.style.alignItems = 'center';
-  header.style.gap = '8px';
+  header.className = 'smarttranslate-header';
 
   const audioBtn = document.createElement('button');
   audioBtn.className = 'smarttranslate-audio-btn';
   audioBtn.type = 'button';
   audioBtn.title = 'Pronuncia';
   audioBtn.textContent = '🔊';
-
-  // plus button to show synonyms/examples or sentence breakdown
-  const plusBtn = document.createElement('button');
-  plusBtn.className = 'smarttranslate-plus-btn';
-  plusBtn.type = 'button';
-  plusBtn.title = '+';
-  plusBtn.textContent = '+';
-
-  // details container (hidden by default)
-  const details = document.createElement('div');
-  details.className = 'smarttranslate-details';
-  details.style.display = 'none';
 
   audioBtn.addEventListener('click', (ev) => {
     ev.stopPropagation();
@@ -175,13 +161,28 @@ function showPopup(original, translated) {
 
   header.appendChild(boldOriginal);
   header.appendChild(audioBtn);
-  header.appendChild(plusBtn);
+
+  // Translation section
+  const translationSection = document.createElement('div');
+  translationSection.className = 'smarttranslate-translation';
+  translationSection.appendChild(translatedDiv);
+
+  // plus button to show synonyms/examples or sentence breakdown
+  const plusBtn = document.createElement('button');
+  plusBtn.className = 'smarttranslate-plus-btn';
+  plusBtn.type = 'button';
+  plusBtn.title = 'Show more details';
+  plusBtn.textContent = '+';
+
+  // details container (hidden by default)
+  const details = document.createElement('div');
+  details.className = 'smarttranslate-details';
+  details.style.display = 'none';
 
   popup.appendChild(header);
+  popup.appendChild(translationSection);
+  popup.appendChild(plusBtn);
   popup.appendChild(details);
-  // separatore visivo
-  popup.appendChild(document.createElement('br'));
-  popup.appendChild(translatedDiv);
 
   document.body.appendChild(popup);
   // Make the popup draggable using CSS classes for cursor; position is absolute via CSS
@@ -258,11 +259,15 @@ function showPopup(original, translated) {
     ev.preventDefault();
     if (details.style.display === 'block') {
       details.style.display = 'none';
+      popup.classList.remove('expanded');
+      plusBtn.textContent = '+';
       return;
     }
     // if already loaded, just show
     if (analysisLoaded) {
       details.style.display = 'block';
+      popup.classList.add('expanded');
+      plusBtn.textContent = '−';
       return;
     }
     // request analysis from background/proxy
@@ -270,7 +275,7 @@ function showPopup(original, translated) {
     plusBtn.textContent = '…';
     const resp = await sendMessageAsync({ type: 'ANALYZE_TEXT', text: original });
     plusBtn.disabled = false;
-    plusBtn.textContent = '+';
+    plusBtn.textContent = '−';
     if (!resp || resp.error) {
       const errMsg = resp ? (resp.message || resp.error || JSON.stringify(resp.raw || resp)) : 'no response';
       details.textContent = `Analisi non disponibile: ${errMsg}`;
@@ -280,6 +285,7 @@ function showPopup(original, translated) {
         details.appendChild(pre);
       }
       details.style.display = 'block';
+      popup.classList.add('expanded');
       return;
     }
     const a = resp.analysis;
@@ -320,6 +326,7 @@ function showPopup(original, translated) {
       details.textContent = 'Nessuna informazione disponibile.';
     }
     details.style.display = 'block';
+    popup.classList.add('expanded');
     analysisLoaded = true;
   });
 

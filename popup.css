@@ -2,21 +2,28 @@
 	position: absolute;
 	background: #fff;
 	border: 1px solid #ccc;
- 	border-radius: 6px;
+ 	border-radius: 8px;
 	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-	padding: 12px;
+	padding: 0;
 	font-size: 14px;
 	color: #333;
 	z-index: 2147483647;
 	cursor: grab;
 	touch-action: none; /* avoid page panning while dragging */
 	user-select: none; /* avoid text selection while dragging */
-	max-width: 360px;
-	min-width: 220px;
-	min-height: 120px;
-	line-height: 1.2;
+	max-width: 320px;
+	min-width: 280px;
+	line-height: 1.4;
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
 		"Helvetica Neue", Arial, sans-serif;
+	display: flex;
+	flex-direction: column;
+	transition: max-width 0.3s ease, max-height 0.3s ease;
+}
+
+.smarttranslate-popup.expanded {
+	max-width: 420px;
+	max-height: 600px;
 }
 
 .smarttranslate-popup.dragging {
@@ -27,17 +34,47 @@
 	font-weight: 600;
 }
 
+/* Header section - top with selected text and audio button */
+.smarttranslate-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 12px 14px;
+	border-bottom: 1px solid #e5e7eb;
+	background: #f9fafb;
+	border-radius: 8px 8px 0 0;
+}
+
 .smarttranslate-audio-btn {
-	background: transparent;
-	border: none;
+	background: #fff;
+	border: 1px solid #d1d5db;
+	border-radius: 4px;
 	cursor: pointer;
 	font-size: 16px;
-	padding: 2px 6px;
+	padding: 4px 8px;
 	line-height: 1;
 	color: #444;
+	transition: all 0.2s ease;
+	flex-shrink: 0;
+}
+.smarttranslate-audio-btn:hover {
+	background: #f3f4f6;
+	border-color: #9ca3af;
 }
 .smarttranslate-audio-btn:active {
 	transform: translateY(1px);
+	background: #e5e7eb;
+}
+
+/* Translation section - middle */
+.smarttranslate-translation {
+	padding: 14px;
+	font-size: 15px;
+	line-height: 1.5;
+	color: #1f2937;
+	flex-grow: 1;
+	min-height: 60px;
 }
 
 /* Floating circular bubble shown next to a text selection */
@@ -59,19 +96,37 @@
 }
 .smarttranslate-bubble:active { transform: translateY(1px); }
 
+/* Plus button - at the bottom */
 .smarttranslate-plus-btn {
-	background: #f3f4f6;
-	border: 1px solid #e2e8f0;
-	border-radius: 4px;
-	padding: 2px 6px;
+	background: #fff;
+	border: none;
+	border-top: 1px solid #e5e7eb;
+	border-radius: 0 0 8px 8px;
+	padding: 10px;
 	cursor: pointer;
 	font-weight: 600;
-	color: #333;
+	font-size: 16px;
+	color: #6b7280;
+	transition: all 0.2s ease;
+	width: 100%;
+	text-align: center;
 }
+.smarttranslate-plus-btn:hover {
+	background: #f9fafb;
+	color: #374151;
+}
+.smarttranslate-plus-btn:active {
+	background: #f3f4f6;
+}
+
+/* Details section - shown when expanded */
 .smarttranslate-details {
-	margin-top: 8px;
+	padding: 0 14px 14px 14px;
 	font-size: 13px;
 	color: #333;
+	max-height: 400px;
+	overflow-y: auto;
+	border-top: 1px solid #f3f4f6;
 }
 .st-detail-title {
 	font-weight: 700;
