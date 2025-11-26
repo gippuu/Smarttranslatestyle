@@ -172,7 +172,7 @@ function showPopup(original, translated) {
   plusBtn.className = 'smarttranslate-plus-btn';
   plusBtn.type = 'button';
   plusBtn.title = 'Show more details';
-  plusBtn.textContent = '+';
+  plusBtn.innerHTML = '<span class="plus-icon">+</span><span class="plus-text">Show details</span>';
 
   // details container (hidden by default)
   const details = document.createElement('div');
@@ -260,22 +260,22 @@ function showPopup(original, translated) {
     if (details.style.display === 'block') {
       details.style.display = 'none';
       popup.classList.remove('expanded');
-      plusBtn.textContent = '+';
+      plusBtn.innerHTML = '<span class="plus-icon">+</span><span class="plus-text">Show details</span>';
       return;
     }
     // if already loaded, just show
     if (analysisLoaded) {
       details.style.display = 'block';
       popup.classList.add('expanded');
-      plusBtn.textContent = '−';
+      plusBtn.innerHTML = '<span class="plus-icon">−</span><span class="plus-text">Hide details</span>';
       return;
     }
     // request analysis from background/proxy
     plusBtn.disabled = true;
-    plusBtn.textContent = '…';
+    plusBtn.innerHTML = '<span class="plus-icon">…</span><span class="plus-text">Loading...</span>';
     const resp = await sendMessageAsync({ type: 'ANALYZE_TEXT', text: original });
     plusBtn.disabled = false;
-    plusBtn.textContent = '−';
+    plusBtn.innerHTML = '<span class="plus-icon">−</span><span class="plus-text">Hide details</span>';
     if (!resp || resp.error) {
       const errMsg = resp ? (resp.message || resp.error || JSON.stringify(resp.raw || resp)) : 'no response';
       details.textContent = `Analisi non disponibile: ${errMsg}`;

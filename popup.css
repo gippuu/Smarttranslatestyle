@@ -105,11 +105,14 @@
 	padding: 10px;
 	cursor: pointer;
 	font-weight: 600;
-	font-size: 16px;
 	color: #6b7280;
 	transition: all 0.2s ease;
 	width: 100%;
 	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
 }
 .smarttranslate-plus-btn:hover {
 	background: #f9fafb;
@@ -117,6 +120,16 @@
 }
 .smarttranslate-plus-btn:active {
 	background: #f3f4f6;
+}
+.smarttranslate-plus-btn .plus-icon {
+	font-size: 18px;
+	font-weight: 700;
+	line-height: 1;
+}
+.smarttranslate-plus-btn .plus-text {
+	font-size: 13px;
+	font-weight: 500;
+	letter-spacing: 0.01em;
 }
 
 /* Details section - shown when expanded */
