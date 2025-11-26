@@ -37,6 +37,8 @@ function playPronunciation(text) {
 // Replace double-click behavior with selection bubble trigger
 let _bubble = null;
 let _bubbleTimeout = null;
+let _lastRequestTime = 0;
+const REQUEST_COOLDOWN_MS = 2000; // 2 second cooldown between requests
 
 function removeBubble() {
   if (_bubble) {
@@ -137,11 +139,23 @@ async function showBubbleForSelection() {
       btn.addEventListener('click', async (ev) => {
         ev.stopPropagation();
         ev.preventDefault();
+
+        // Check cooldown to prevent rate limiting
+        const now = Date.now();
+        if (now - _lastRequestTime < REQUEST_COOLDOWN_MS) {
+          console.warn('Please wait before making another request');
+          return;
+        }
+        _lastRequestTime = now;
+
         // fetch translation with context
         const context = getSelectionContext(range, text);
         const resp = await sendMessageAsync({ type: 'TRANSLATE_TEXT', text, context });
         if (!resp || resp.error) {
           console.error('Errore traduzione:', resp);
+          if (resp && resp.status === 429) {
+            alert('Rate limit reached. Please wait a moment before translating again.');
+          }
           return;
         }
         removeBubble();
