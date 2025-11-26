@@ -139,7 +139,20 @@ function showPopup(original, translated) {
 
   // Costruisci DOM in modo sicuro (no innerHTML con stringhe non attendibili)
   const boldOriginal = document.createElement('b');
-  boldOriginal.textContent = original;
+  boldOriginal.className = 'smarttranslate-original-text';
+  // Truncate long text with smart word boundary
+  const maxLength = 50;
+  let displayText = original;
+  if (original.length > maxLength) {
+    // Find last space before maxLength to avoid cutting words
+    const truncated = original.substring(0, maxLength);
+    const lastSpace = truncated.lastIndexOf(' ');
+    displayText = (lastSpace > 0 ? original.substring(0, lastSpace) : truncated) + '...';
+    // Store full text in title for tooltip
+    boldOriginal.title = original;
+  }
+  boldOriginal.textContent = displayText;
+
   const translatedDiv = document.createElement('div');
   translatedDiv.textContent = translated;
 

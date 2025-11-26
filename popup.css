@@ -46,6 +46,22 @@
 	border-radius: 8px 8px 0 0;
 }
 
+/* Original text styling with overflow handling */
+.smarttranslate-original-text {
+	max-width: 200px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	display: inline-block;
+	vertical-align: middle;
+	position: relative;
+	cursor: help;
+}
+
+.smarttranslate-original-text[title]:hover {
+	color: #1f2937;
+}
+
 .smarttranslate-audio-btn {
 	background: #fff;
 	border: 1px solid #d1d5db;
