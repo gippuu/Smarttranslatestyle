@@ -199,6 +199,127 @@ function renderDetailedAnalysis(container, analysis, originalText) {
     container.appendChild(sep1);
   }
 
+  // 🔤 LITERAL VS DEEP MEANING
+  if (analysis.literalTranslation || analysis.deepMeaning) {
+    const meaningSection = document.createElement('div');
+    meaningSection.className = 'st-section';
+
+    const meaningTitle = document.createElement('div');
+    meaningTitle.className = 'st-section-title';
+    meaningTitle.textContent = '🔤 LITERAL VS DEEP MEANING';
+    meaningSection.appendChild(meaningTitle);
+
+    if (analysis.literalTranslation) {
+      const literalDiv = document.createElement('div');
+      literalDiv.className = 'st-meaning-item';
+
+      const literalLabel = document.createElement('div');
+      literalLabel.className = 'st-meaning-label';
+      literalLabel.textContent = 'Literal:';
+      literalDiv.appendChild(literalLabel);
+
+      const literalText = document.createElement('div');
+      literalText.className = 'st-meaning-text st-literal';
+      literalText.textContent = analysis.literalTranslation;
+      literalDiv.appendChild(literalText);
+
+      meaningSection.appendChild(literalDiv);
+    }
+
+    if (analysis.deepMeaning) {
+      const deepDiv = document.createElement('div');
+      deepDiv.className = 'st-meaning-item';
+
+      const deepLabel = document.createElement('div');
+      deepLabel.className = 'st-meaning-label';
+      deepLabel.textContent = 'Deep Meaning:';
+      deepDiv.appendChild(deepLabel);
+
+      const deepText = document.createElement('div');
+      deepText.className = 'st-meaning-text st-deep';
+      deepText.textContent = analysis.deepMeaning;
+      deepDiv.appendChild(deepText);
+
+      meaningSection.appendChild(deepDiv);
+    }
+
+    container.appendChild(meaningSection);
+
+    const sep2 = document.createElement('div');
+    sep2.className = 'st-separator';
+    container.appendChild(sep2);
+  }
+
+  // 📝 SENTENCE STRUCTURE (Word-by-word breakdown)
+  if (analysis.sentenceStructure && analysis.sentenceStructure.words && analysis.sentenceStructure.words.length > 0) {
+    const structSection = document.createElement('div');
+    structSection.className = 'st-section';
+
+    const structTitle = document.createElement('div');
+    structTitle.className = 'st-section-title';
+    structTitle.textContent = '📝 SENTENCE STRUCTURE';
+    structSection.appendChild(structTitle);
+
+    const structTable = document.createElement('div');
+    structTable.className = 'st-structure-table';
+
+    analysis.sentenceStructure.words.forEach((wordInfo, index) => {
+      const row = document.createElement('div');
+      row.className = 'st-structure-row';
+
+      // Position number
+      const posCell = document.createElement('div');
+      posCell.className = 'st-structure-pos';
+      posCell.textContent = wordInfo.position || (index + 1);
+      row.appendChild(posCell);
+
+      // Word details
+      const detailsCell = document.createElement('div');
+      detailsCell.className = 'st-structure-details';
+
+      const wordDiv = document.createElement('div');
+      wordDiv.className = 'st-structure-word';
+      wordDiv.textContent = wordInfo.word;
+      detailsCell.appendChild(wordDiv);
+
+      if (wordInfo.baseForm && wordInfo.baseForm !== wordInfo.word) {
+        const baseDiv = document.createElement('div');
+        baseDiv.className = 'st-structure-base';
+        baseDiv.textContent = `Base: ${wordInfo.baseForm}`;
+        detailsCell.appendChild(baseDiv);
+      }
+
+      const roleDiv = document.createElement('div');
+      roleDiv.className = 'st-structure-role';
+      roleDiv.textContent = wordInfo.role || 'Unknown';
+      detailsCell.appendChild(roleDiv);
+
+      if (wordInfo.meaning) {
+        const meaningDiv = document.createElement('div');
+        meaningDiv.className = 'st-structure-meaning';
+        meaningDiv.textContent = `→ ${wordInfo.meaning}`;
+        detailsCell.appendChild(meaningDiv);
+      }
+
+      if (wordInfo.notes) {
+        const notesDiv = document.createElement('div');
+        notesDiv.className = 'st-structure-notes';
+        notesDiv.textContent = wordInfo.notes;
+        detailsCell.appendChild(notesDiv);
+      }
+
+      row.appendChild(detailsCell);
+      structTable.appendChild(row);
+    });
+
+    structSection.appendChild(structTable);
+    container.appendChild(structSection);
+
+    const sep3 = document.createElement('div');
+    sep3.className = 'st-separator';
+    container.appendChild(sep3);
+  }
+
   // 🔄 SYNONYMS & ALTERNATIVES
   if (analysis.synonyms && analysis.synonyms.length > 0) {
     const synSection = document.createElement('div');
@@ -220,9 +341,9 @@ function renderDetailedAnalysis(container, analysis, originalText) {
 
     container.appendChild(synSection);
 
-    const sep2 = document.createElement('div');
-    sep2.className = 'st-separator';
-    container.appendChild(sep2);
+    const sep4 = document.createElement('div');
+    sep4.className = 'st-separator';
+    container.appendChild(sep4);
   }
 
   // 💬 EXAMPLE SENTENCES
@@ -247,9 +368,9 @@ function renderDetailedAnalysis(container, analysis, originalText) {
 
     container.appendChild(exSection);
 
-    const sep3 = document.createElement('div');
-    sep3.className = 'st-separator';
-    container.appendChild(sep3);
+    const sep5 = document.createElement('div');
+    sep5.className = 'st-separator';
+    container.appendChild(sep5);
   }
 
   // ⚠️ DON'T CONFUSE WITH
@@ -273,9 +394,9 @@ function renderDetailedAnalysis(container, analysis, originalText) {
 
     container.appendChild(confSection);
 
-    const sep4 = document.createElement('div');
-    sep4.className = 'st-separator';
-    container.appendChild(sep4);
+    const sep6 = document.createElement('div');
+    sep6.className = 'st-separator';
+    container.appendChild(sep6);
   }
 
   // 🎯 USAGE NOTES
